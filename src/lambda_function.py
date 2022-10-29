@@ -1,24 +1,22 @@
 import json
 import boto3
+from botocore import exceptions
 
 def start_ec2():
+
+    desc = boto3.client('ec2')
     ec2 = boto3.resource('ec2')
 
     tag_key = 'gpu'
     tag_val = 'yes'
-    instances = ec2.describe_instances(Filters=[{'Name': 'tag:'+tag_key, 'Values': [tag_val]}])
-
-    try:
-        response = ec2.start_instances(InstanceIds=[instances], DryRun=False)
-        return response
-    except ClientError as e:
-        return e
+        
+    instances = desc.describe_instances(Filters=[{'Name': 'tag:'+tag_key, 'Values': [tag_val]}])
+   
+    ec2.start_instances(InstanceIds=[instances], DryRun=False)
 
 def add_variables_to_ssm(to_be_added):
     ssm = boto3.client('ssm')
-    
-    try:
-        resposne = ssm.put_parameter(
+    ssm.put_parameter(
             Name=to_be_added,
             Description=to_be_added,
             Value=to_be_added,
@@ -36,18 +34,16 @@ def add_variables_to_ssm(to_be_added):
             Policies='string',
             DataType='string'
         )
-        return response
-    except CLientError as e:
-        return e
     
 
 def lambda_handler(event, context):
     # from form-data
-    algo_of_hash = json.loads["Metadata"]["algo"]
-    hash_to_crack = json.loads["Metadata"]["hash"]
-    wordlist = json.loads["Metadata"]["wordlist"]
+    algo_of_hash = event['algo']
+    hash_to_crack = event['hash']
+    wordlist = event = ['wordlist']
     
     start_ec2()
+
     add_variables_to_ssm(algo_of_hash)
     add_variables_to_ssm(hash_to_crack)
     add_variables_to_ssm(wordlist) 
